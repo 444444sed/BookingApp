@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import User, { UserType, CreateUserType } from '../models/user';
+import User, { CreateUserType } from '../models/user';
 import jwt from 'jsonwebtoken';
 import { check, validationResult } from 'express-validator';
 
@@ -11,9 +11,7 @@ router.post(
     check('firstName', 'First name is required').isString(),
     check('lastName', 'Last name is required').isString(),
     check('email', 'Email is required').isEmail(),
-    check('password', 'Password with 6 or more characters required').isLength({
-      min: 6,
-    }),
+    check('password', 'Password with 6 or more characters required').isLength({ min: 6 }),
   ],
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -22,7 +20,7 @@ router.post(
     }
 
     try {
-      const { firstName, lastName, email, password }: CreateUserType = req.body;
+      const { firstName, lastName, email, password }: CreateUserType & { password: string } = req.body;
 
       // Check if the user already exists
       const existingUser = await User.findByEmail(email);
@@ -31,11 +29,11 @@ router.post(
       }
 
       // Create a new user
-      const newUser: UserType = await User.create({
+      const newUser = await User.create({
         email,
-        password,
         firstName,
         lastName,
+        password, // Pass the plain password for hashing in the user model
       });
 
       const token = jwt.sign(
@@ -50,12 +48,13 @@ router.post(
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 86400000,
+        sameSite: 'strict', // Add sameSite for security
       });
 
-      return res.status(200).send({ message: 'User registered OK' });
+      return res.status(201).json({ message: 'User registered successfully', userId: newUser.id });
     } catch (error) {
       console.error('Error details:', error);
-      return res.status(500).send({ message: (error as Error).message });
+      return res.status(500).json({ message: 'Internal server error' });
     }
   }
 );
