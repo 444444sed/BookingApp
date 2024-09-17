@@ -1,78 +1,106 @@
 import { RegisterFormData } from "./pages/Register";
 import { SignInFormData } from "./pages/SignIn";
+import { HotelType } from "../../backend/src/shared/types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export const register = async(formData:RegisterFormData)=>{
-    const response = await fetch(`${API_BASE_URL}/api/users/register`,{
-        method:'POST',
+// Register a new user
+export const register = async (formData: RegisterFormData) => {
+    const response = await fetch(`${API_BASE_URL}/api/users/register`, {
+        method: 'POST',
         credentials: "include",
-        headers:{
-            "Content-Type":"application/json"
+        headers: {
+            "Content-Type": "application/json"
         },
-        body:JSON.stringify(formData),
+        body: JSON.stringify(formData),
     });
 
     const responseBody = await response.json();
 
-    if(!response.ok){
-        throw new Error(responseBody.message);
+    if (!response.ok) {
+        throw new Error(responseBody.message || "Registration failed");
     }
-
 };
 
-export const signIn = async (formData: SignInFormData) =>{
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`,{
-        method:"POST",
-        credentials:"include",
-        headers:{
-            "Content-Type":"application/json"
+// Sign in a user
+export const signIn = async (formData: SignInFormData) => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
         },
         body: JSON.stringify(formData)
-    })
+    });
 
     const body = await response.json();
-    if(!response.ok){
-        throw new Error(body.message)
+    
+    if (!response.ok) {
+        throw new Error(body.message || "Sign-in failed");
     }
+
     return body;
+};
 
-}
+// Validate the user's token
+export const validateToken = async () => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/validate-token`, {
+        credentials: "include"
+    });
 
-export const validateToken = async () =>{
-    const response = await fetch(`${API_BASE_URL}/api/auth/validate-token`,{
-        credentials:"include"
-    })
-
-    if(!response.ok){
-        throw new Error("Token invalid")
+    if (!response.ok) {
+        throw new Error("Token invalid");
     }
 
     return response.json();
 };
 
-export const signOut = async()=>{
+// Sign out a user
+export const signOut = async () => {
     const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-        credentials:"include",
-        method:"POST"
+        method: "POST",
+        credentials: "include"
     });
 
-    if(!response.ok){
+    if (!response.ok) {
         throw new Error("Error during sign out");
     }
-
 };
 
-export const addMyHotel = async (hotelFormData: FormData) =>{
+// Add a new hotel
+export const addMyHotel = async (hotelFormData: FormData) => {
     const response = await fetch(`${API_BASE_URL}/api/my-hotels`, {
-        method:"POST",
+        method: "POST",
         credentials: "include",
         body: hotelFormData,
     });
 
-    if(!response.ok){
-        throw new Error("Failed to add hotel");
+    if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.message || "Failed to add hotel");
     }
 
     return response.json();
+};
+
+// Fetch the user's hotels
+export const fetchMyHotels = async (): Promise<HotelType[]> => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/my-hotels`, {
+            credentials: "include",
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error fetching hotels: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        console.log('API response data:', JSON.stringify(data, null, 2)); // Log the full response
+
+        return data as HotelType[];
+    } catch (error) {
+        console.error("Fetch error:", error);
+        throw error; // Rethrow the error for handling in the component
+    }
 };

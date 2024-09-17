@@ -9,7 +9,7 @@ export type HotelFormData = {
     name: string;
     city: string;
     country: string;
-    description:string;
+    description: string;
     type: string;
     pricePerNight: number;
     starRating: number;
@@ -17,22 +17,19 @@ export type HotelFormData = {
     imageFiles: FileList;
     adultCount: number;
     childCount: number;
-
-
 };
 
 type Props = {
-    onSave: (hotelFormData: FormData)=> void
-    isLoading: boolean
-}
+    onSave: (hotelFormData: FormData) => void;
+    isLoading: boolean;
+};
 
-
-const ManageHotelForm = ({onSave, isLoading}: Props)=>{
+const ManageHotelForm = ({ onSave, isLoading }: Props) => {
     const formMethods = useForm<HotelFormData>();
-    const {handleSubmit} = formMethods; 
+    const { handleSubmit } = formMethods;
 
-    const onSubmit = handleSubmit((formDataJson: HotelFormData)=>{
-        // create new FormData object && call our API
+    const onSubmit = handleSubmit((formDataJson: HotelFormData) => {
+        // Create new FormData object
         const formData = new FormData();
         formData.append("name", formDataJson.name);
         formData.append("city", formDataJson.city);
@@ -44,40 +41,36 @@ const ManageHotelForm = ({onSave, isLoading}: Props)=>{
         formData.append("adultCount", formDataJson.adultCount.toString());
         formData.append("childCount", formDataJson.childCount.toString());
 
-        formDataJson.facilities.forEach((facility, index)=>{
-            formData.append(`facilities[${index}]`,facility)
-
-        })
-
-        Array.from(formDataJson.imageFiles).forEach((imageFile)=>{
-            formData.append(`imageFiles`, imageFile);
-
+        formDataJson.facilities.forEach((facility) => {
+            formData.append("facilities[]", facility); // Use array syntax for consistency
         });
 
-       onSave(formData)
-       
+        Array.from(formDataJson.imageFiles).forEach((imageFile) => {
+            formData.append("imageFiles", imageFile);
+        });
 
+        onSave(formData);
     });
-    return( 
-    <FormProvider {...formMethods}>
-        <form className="flex flex-col gap-10" onSubmit={onSubmit}>
-            <DetailsSection/>
-            <TypeSection/>
-            <FacilitiesSection/>
-            <GuestsSection/>
-            <ImagesSection/>
-            <span className="flex justify-end">
-                <button 
-                disabled={isLoading}
-                type="submit"
-                className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500" 
-                >
-                    {isLoading ? "Saving...": "Save"}
-                </button>
 
-            </span>
-        </form>
-    </FormProvider>
+    return (
+        <FormProvider {...formMethods}>
+            <form className="flex flex-col gap-10" onSubmit={onSubmit}>
+                <DetailsSection />
+                <TypeSection />
+                <FacilitiesSection />
+                <GuestsSection />
+                <ImagesSection />
+                <span className="flex justify-end">
+                    <button
+                        disabled={isLoading}
+                        type="submit"
+                        className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500"
+                    >
+                        {isLoading ? "Saving..." : "Save"}
+                    </button>
+                </span>
+            </form>
+        </FormProvider>
     );
 };
 
